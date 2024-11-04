@@ -1,24 +1,82 @@
-import logo from './logo.svg';
+import React, { useEffect } from 'react';
 import './App.css';
+import Header from './Header';
+import Home from './Home';
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Checkout from "./Checkout";
+import Login from './Login';
+import { useStateValue } from "./StateProvider";
+import { auth } from "./Firebase";
+import Payment from './Payment';
+import {loadStripe} from "@stripe/stripe-js"
+import { Elements} from "@stripe/react-stripe-js"
+import Orders from './Orders';
+
+const promise=loadStripe('pk_test_51NPygHG9jMKwWSA9sPXxui0lrS9A60MyuOPZAtnyohnbYqELwz7aw0mbiesmeXECLhFt8QSxZjBxtC8LYK7EGYWF00YhdSduDv' 
+);
+
 
 function App() {
+    const [{ user }, dispatch] = useStateValue();
+ useEffect(() => {
+      auth.onAuthStateChanged((authUser) => {
+        if (authUser) {
+          //the user is logged in.....
+
+          dispatch({
+            type: "SET_USER",
+            user: authUser,
+          });
+        } else {
+          //the user is logged out....
+          dispatch({
+            type: "SET_USER",
+            user: null,
+          });
+        }
+      });
+ }, []);
+      
+   
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Router>
+      <div className="App">
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/orders" element={ <>
+                <Header /><Orders /></>} />
+          <Route
+            path="/payment"
+            element={
+              <>
+                <Header />
+                <Elements stripe={promise}>
+                  <Payment />
+                </Elements>
+              </>
+            }
+          />
+          <Route
+            path="/"
+            element={
+              <>
+                <Header />
+                <Home />
+              </>
+            }
+          />
+          <Route
+            path="/checkout"
+            element={
+              <>
+                <Header />
+                <Checkout />
+              </>
+            }
+          />
+        </Routes>
+      </div>
+    </Router>
   );
 }
 
